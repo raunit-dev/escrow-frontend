@@ -12,7 +12,7 @@ const links = [
 
 const LazyAccountIndex = lazy(() => import('@/components/account/account-index-feature'))
 const LazyAccountDetail = lazy(() => import('@/components/account/account-detail-feature'))
-const LazyEscrow = lazy(() => import('@/basic/basic-feature'))
+const LazyEscrow = lazy(() => import('@/escrow/basic-feature'))
 const LazyDashboard = lazy(() => import('@/components/dashboard/dashboard-feature'))
 
 const routes: RouteObject[] = [
