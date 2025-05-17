@@ -7,12 +7,12 @@ const links = [
   //
   { label: 'Home', path: '/' },
   { label: 'Account', path: '/account' },
-  { label: 'Basic Program', path: '/basic' },
+  { label: 'Escrow Program', path: '/escrow' },
 ]
 
 const LazyAccountIndex = lazy(() => import('@/components/account/account-index-feature'))
 const LazyAccountDetail = lazy(() => import('@/components/account/account-detail-feature'))
-const LazyBasic = lazy(() => import('@/basic/basic-feature'))
+const LazyEscrow = lazy(() => import('@/basic/basic-feature'))
 const LazyDashboard = lazy(() => import('@/components/dashboard/dashboard-feature'))
 
 const routes: RouteObject[] = [
@@ -24,7 +24,7 @@ const routes: RouteObject[] = [
       { path: ':address', element: <LazyAccountDetail /> },
     ],
   },
-  { path: 'basic', element: <LazyBasic /> },
+  { path: 'Escrow', element: <LazyEscrow /> },
 ]
 
 console.log({ links, routes })
