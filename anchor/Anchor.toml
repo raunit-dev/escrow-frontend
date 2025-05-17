@@ -8,6 +8,9 @@ skip-lint = false
 [programs.localnet]
 basic = "JAVuBXeBZqXNtS73azhBDAoYaaAFfo4gWXoZe2e7Jf8H"
 
+[programs.devnet]
+basic = "ATqMRvwjJK28Sa8C3yUYZ9DnJip2pBTPsQD5uSWeUWBj"
+
 [registry]
 url = "https://api.apr.dev"
 
