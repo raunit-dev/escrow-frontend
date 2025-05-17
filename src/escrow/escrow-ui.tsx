@@ -1,26 +1,4 @@
-function EscrowCard({ account, isOwner }) {
-  const { takeEscrow, refundEscrow } = useEscrowProgram()
-  const escrowState = account.account
-  const escrowAddress = account.publicKey
-  
-  const handleTake = async () => {
-    try {
-      await takeEscrow.mutateAsync({
-        escrowAddress,
-        maker: escrowState.maker,
-        mintA: escrowState.mintA,
-        mintB: escrowState.mintB,
-      })
-    } catch (error) {
-      console.error('Error taking escrow:', error)
-    }
-  }
-  
-  const handleRefund = async () => {
-    try {
-      await refundEscrow.mutateAsync({
-        escrowAddress,
-        import { useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { PublicKey } from '@solana/web3.js'
 import { useEscrowProgram } from './escrow-data-access'
@@ -56,12 +34,12 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert"
+// import { toast } from 'react-hot-toast' // Uncomment if you use toast
 
 export function EscrowActions() {
   const { publicKey } = useWallet()
-  
   if (!publicKey) return null
-  
+
   return (
     <Tabs defaultValue="create" className="w-full max-w-md">
       <TabsList className="grid grid-cols-3 mb-4">
@@ -69,15 +47,12 @@ export function EscrowActions() {
         <TabsTrigger value="take">Take</TabsTrigger>
         <TabsTrigger value="refund">Refund</TabsTrigger>
       </TabsList>
-      
       <TabsContent value="create">
         <CreateEscrowForm />
       </TabsContent>
-      
       <TabsContent value="take">
         <TakeEscrowForm />
       </TabsContent>
-      
       <TabsContent value="refund">
         <RefundEscrowForm />
       </TabsContent>
@@ -91,17 +66,14 @@ function CreateEscrowForm() {
   const [amount, setAmount] = useState('')
   const [receiveAmount, setReceiveAmount] = useState('')
   const [seed, setSeed] = useState(Math.floor(Math.random() * 1000000).toString())
-  
   const { makeEscrow } = useEscrowProgram()
-  
-  const handleSubmit = async (e) => {
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    
     if (!mintA || !mintB || !amount || !receiveAmount || !seed) {
-      toast.error('Please fill all fields')
+      // toast.error('Please fill all fields')
       return
     }
-    
     try {
       await makeEscrow.mutateAsync({
         mintA: new PublicKey(mintA),
@@ -110,8 +82,6 @@ function CreateEscrowForm() {
         receiveAmount: Number(receiveAmount),
         seed: Number(seed),
       })
-      
-      // Clear form on success
       setAmount('')
       setReceiveAmount('')
       setSeed(Math.floor(Math.random() * 1000000).toString())
@@ -119,7 +89,7 @@ function CreateEscrowForm() {
       console.error('Error creating escrow:', error)
     }
   }
-  
+
   return (
     <Card>
       <CardHeader>
@@ -132,79 +102,32 @@ function CreateEscrowForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="mintA">Token to Deposit (Mint A)</Label>
-            <Input 
-              id="mintA" 
-              placeholder="Token Mint Address" 
-              value={mintA} 
-              onChange={(e) => setMintA(e.target.value)} 
-              required
-            />
+            <Input id="mintA" placeholder="Token Mint Address" value={mintA} onChange={(e) => setMintA(e.target.value)} required />
           </div>
-          
           <div className="space-y-2">
             <Label htmlFor="amount">Amount to Deposit</Label>
-            <Input 
-              id="amount" 
-              type="number" 
-              placeholder="Amount" 
-              value={amount} 
-              onChange={(e) => setAmount(e.target.value)} 
-              required
-              min="1"
-            />
+            <Input id="amount" type="number" placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} required min="1" />
           </div>
-          
           <div className="space-y-2">
             <Label htmlFor="mintB">Token to Receive (Mint B)</Label>
-            <Input 
-              id="mintB" 
-              placeholder="Token Mint Address" 
-              value={mintB} 
-              onChange={(e) => setMintB(e.target.value)} 
-              required
-            />
+            <Input id="mintB" placeholder="Token Mint Address" value={mintB} onChange={(e) => setMintB(e.target.value)} required />
           </div>
-          
           <div className="space-y-2">
             <Label htmlFor="receiveAmount">Amount to Receive</Label>
-            <Input 
-              id="receiveAmount" 
-              type="number" 
-              placeholder="Amount" 
-              value={receiveAmount} 
-              onChange={(e) => setReceiveAmount(e.target.value)} 
-              required
-              min="1"
-            />
+            <Input id="receiveAmount" type="number" placeholder="Amount" value={receiveAmount} onChange={(e) => setReceiveAmount(e.target.value)} required min="1" />
           </div>
-          
           <div className="space-y-2">
             <Label htmlFor="seed">Escrow Seed</Label>
-            <Input 
-              id="seed" 
-              type="number" 
-              placeholder="Unique Seed Number" 
-              value={seed} 
-              onChange={(e) => setSeed(e.target.value)} 
-              required
-              min="1"
-            />
+            <Input id="seed" type="number" placeholder="Unique Seed Number" value={seed} onChange={(e) => setSeed(e.target.value)} required min="1" />
             <p className="text-xs text-muted-foreground">
               A unique identifier for this escrow (auto-generated)
             </p>
           </div>
+          <Button type="submit" disabled={makeEscrow.isPending} className="w-full">
+            {makeEscrow.isPending ? 'Creating...' : 'Create Escrow'}
+          </Button>
         </form>
       </CardContent>
-      <CardFooter>
-        <Button 
-          type="submit" 
-          onClick={handleSubmit} 
-          disabled={makeEscrow.isPending}
-          className="w-full"
-        >
-          {makeEscrow.isPending ? 'Creating...' : 'Create Escrow'}
-        </Button>
-      </CardFooter>
     </Card>
   )
 }
@@ -214,10 +137,9 @@ function TakeEscrowForm() {
   const [maker, setMaker] = useState('')
   const [mintA, setMintA] = useState('')
   const [mintB, setMintB] = useState('')
-  
   const { takeEscrow } = useEscrowProgram()
-  
-  const handleSubmit = async (e) => {
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     try {
       await takeEscrow.mutateAsync({
@@ -230,7 +152,7 @@ function TakeEscrowForm() {
       console.error('Error taking escrow:', error)
     }
   }
-  
+
   return (
     <Card>
       <CardHeader>
@@ -243,59 +165,25 @@ function TakeEscrowForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="escrowAddress">Escrow Address</Label>
-            <Input 
-              id="escrowAddress" 
-              placeholder="Escrow Account Address" 
-              value={escrowAddress} 
-              onChange={(e) => setEscrowAddress(e.target.value)} 
-              required
-            />
+            <Input id="escrowAddress" placeholder="Escrow Account Address" value={escrowAddress} onChange={(e) => setEscrowAddress(e.target.value)} required />
           </div>
-          
           <div className="space-y-2">
             <Label htmlFor="maker">Maker Address</Label>
-            <Input 
-              id="maker" 
-              placeholder="Maker's Wallet Address" 
-              value={maker} 
-              onChange={(e) => setMaker(e.target.value)} 
-              required
-            />
+            <Input id="maker" placeholder="Maker's Wallet Address" value={maker} onChange={(e) => setMaker(e.target.value)} required />
           </div>
-          
           <div className="space-y-2">
             <Label htmlFor="mintA">Token A Mint</Label>
-            <Input 
-              id="mintA" 
-              placeholder="Token A Mint Address" 
-              value={mintA} 
-              onChange={(e) => setMintA(e.target.value)} 
-              required
-            />
+            <Input id="mintA" placeholder="Token A Mint Address" value={mintA} onChange={(e) => setMintA(e.target.value)} required />
           </div>
-          
           <div className="space-y-2">
             <Label htmlFor="mintB">Token B Mint</Label>
-            <Input 
-              id="mintB" 
-              placeholder="Token B Mint Address" 
-              value={mintB} 
-              onChange={(e) => setMintB(e.target.value)} 
-              required
-            />
+            <Input id="mintB" placeholder="Token B Mint Address" value={mintB} onChange={(e) => setMintB(e.target.value)} required />
           </div>
+          <Button type="submit" disabled={takeEscrow.isPending} className="w-full">
+            {takeEscrow.isPending ? 'Processing...' : 'Take Escrow'}
+          </Button>
         </form>
       </CardContent>
-      <CardFooter>
-        <Button 
-          type="submit" 
-          onClick={handleSubmit} 
-          disabled={takeEscrow.isPending}
-          className="w-full"
-        >
-          {takeEscrow.isPending ? 'Processing...' : 'Take Escrow'}
-        </Button>
-      </CardFooter>
     </Card>
   )
 }
@@ -303,10 +191,9 @@ function TakeEscrowForm() {
 function RefundEscrowForm() {
   const [escrowAddress, setEscrowAddress] = useState('')
   const [mintA, setMintA] = useState('')
-  
   const { refundEscrow } = useEscrowProgram()
-  
-  const handleSubmit = async (e) => {
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     try {
       await refundEscrow.mutateAsync({
@@ -317,7 +204,7 @@ function RefundEscrowForm() {
       console.error('Error refunding escrow:', error)
     }
   }
-  
+
   return (
     <Card>
       <CardHeader>
@@ -330,37 +217,17 @@ function RefundEscrowForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="escrowAddress">Escrow Address</Label>
-            <Input 
-              id="escrowAddress" 
-              placeholder="Escrow Account Address" 
-              value={escrowAddress} 
-              onChange={(e) => setEscrowAddress(e.target.value)} 
-              required
-            />
+            <Input id="escrowAddress" placeholder="Escrow Account Address" value={escrowAddress} onChange={(e) => setEscrowAddress(e.target.value)} required />
           </div>
-          
           <div className="space-y-2">
             <Label htmlFor="mintA">Token Mint</Label>
-            <Input 
-              id="mintA" 
-              placeholder="Token Mint Address" 
-              value={mintA} 
-              onChange={(e) => setMintA(e.target.value)} 
-              required
-            />
+            <Input id="mintA" placeholder="Token Mint Address" value={mintA} onChange={(e) => setMintA(e.target.value)} required />
           </div>
+          <Button type="submit" disabled={refundEscrow.isPending} className="w-full">
+            {refundEscrow.isPending ? 'Processing...' : 'Refund Escrow'}
+          </Button>
         </form>
       </CardContent>
-      <CardFooter>
-        <Button 
-          type="submit" 
-          onClick={handleSubmit} 
-          disabled={refundEscrow.isPending}
-          className="w-full"
-        >
-          {refundEscrow.isPending ? 'Processing...' : 'Refund Escrow'}
-        </Button>
-      </CardFooter>
     </Card>
   )
 }
@@ -368,14 +235,11 @@ function RefundEscrowForm() {
 export function EscrowList() {
   const { getEscrowAccounts } = useEscrowProgram()
   const { publicKey } = useWallet()
-  
   const [filter, setFilter] = useState("all")
-  
   const accounts = getEscrowAccounts.data || []
-  
+
   const filteredAccounts = useMemo(() => {
     if (!accounts.length) return []
-    
     switch (filter) {
       case "my":
         return accounts.filter(
@@ -389,7 +253,7 @@ export function EscrowList() {
         return accounts
     }
   }, [accounts, publicKey, filter])
-  
+
   if (getEscrowAccounts.isLoading) {
     return (
       <div className="flex justify-center p-8">
@@ -397,7 +261,16 @@ export function EscrowList() {
       </div>
     )
   }
-  
+
+  if (getEscrowAccounts.isError) {
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>Failed to load escrow accounts</AlertDescription>
+      </Alert>
+    )
+  }
+
   if (accounts.length === 0) {
     return (
       <Alert>
@@ -408,39 +281,23 @@ export function EscrowList() {
       </Alert>
     )
   }
-  
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Escrow List</h2>
-        
         <div className="flex items-center space-x-2">
-          <Button 
-            size="sm" 
-            variant={filter === "all" ? "default" : "outline"}
-            onClick={() => setFilter("all")}
-          >
+          <Button size="sm" variant={filter === "all" ? "default" : "outline"} onClick={() => setFilter("all")}>
             All Escrows
           </Button>
-          
-          <Button 
-            size="sm" 
-            variant={filter === "my" ? "default" : "outline"}
-            onClick={() => setFilter("my")}
-          >
+          <Button size="sm" variant={filter === "my" ? "default" : "outline"} onClick={() => setFilter("my")}>
             My Escrows
           </Button>
-          
-          <Button 
-            size="sm" 
-            variant={filter === "available" ? "default" : "outline"}
-            onClick={() => setFilter("available")}
-          >
+          <Button size="sm" variant={filter === "available" ? "default" : "outline"} onClick={() => setFilter("available")}>
             Available
           </Button>
         </div>
       </div>
-      
       {filteredAccounts.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <h3 className="text-lg font-medium">No {filter === "my" ? "personal" : filter === "available" ? "available" : ""} escrows found</h3>
@@ -450,7 +307,18 @@ export function EscrowList() {
           {filteredAccounts.map((account) => (
             <EscrowCard 
               key={account.publicKey.toString()} 
-              account={account} 
+              account={{
+                ...account,
+                account: {
+                  ...account.account,
+                  receiveAmount: typeof account.account.receiveAmount === 'object' && 'toNumber' in account.account.receiveAmount
+                    ? account.account.receiveAmount.toNumber()
+                    : account.account.receiveAmount,
+                  seed: typeof account.account.seed === 'object' && 'toNumber' in account.account.seed
+                    ? account.account.seed.toNumber()
+                    : account.account.seed,
+                }
+              }} 
               isOwner={publicKey?.toString() === account.account.maker.toString()}
             />
           ))}
@@ -460,11 +328,23 @@ export function EscrowList() {
   )
 }
 
-function EscrowCard({ account, isOwner }) {
+type EscrowAccount = {
+  publicKey: PublicKey
+  account: {
+    maker: PublicKey
+    mintA: PublicKey
+    mintB: PublicKey
+    receiveAmount: number
+    seed: number
+    // Add other fields as needed
+  }
+}
+
+function EscrowCard({ account, isOwner }: { account: EscrowAccount; isOwner: boolean }) {
   const { takeEscrow, refundEscrow } = useEscrowProgram()
   const escrowState = account.account
   const escrowAddress = account.publicKey
-  
+
   const handleTake = async () => {
     try {
       await takeEscrow.mutateAsync({
@@ -477,7 +357,7 @@ function EscrowCard({ account, isOwner }) {
       console.error('Error taking escrow:', error)
     }
   }
-  
+
   const handleRefund = async () => {
     try {
       await refundEscrow.mutateAsync({
@@ -488,7 +368,7 @@ function EscrowCard({ account, isOwner }) {
       console.error('Error refunding escrow:', error)
     }
   }
-  
+
   return (
     <Card>
       <CardHeader>
@@ -508,7 +388,6 @@ function EscrowCard({ account, isOwner }) {
               {ellipsify(escrowState.maker.toString())}
             </span>
           </div>
-          
           <div className="flex justify-between">
             <span className="text-muted-foreground">Offering</span>
             <span>
@@ -519,7 +398,6 @@ function EscrowCard({ account, isOwner }) {
               />
             </span>
           </div>
-          
           <div className="flex justify-between">
             <span className="text-muted-foreground">For</span>
             <span>
@@ -534,23 +412,14 @@ function EscrowCard({ account, isOwner }) {
       </CardContent>
       <CardFooter className="flex gap-2">
         {isOwner ? (
-          <Button 
-            onClick={handleRefund} 
-            disabled={refundEscrow.isPending}
-            className="w-full"
-          >
+          <Button onClick={handleRefund} disabled={refundEscrow.isPending} className="w-full">
             {refundEscrow.isPending ? 'Processing...' : 'Refund'}
           </Button>
         ) : (
-          <Button 
-            onClick={handleTake} 
-            disabled={takeEscrow.isPending}
-            className="w-full"
-          >
+          <Button onClick={handleTake} disabled={takeEscrow.isPending} className="w-full">
             {takeEscrow.isPending ? 'Processing...' : 'Take Offer'}
           </Button>
         )}
-        
         <Dialog>
           <DialogTrigger asChild>
             <Button variant="outline">Details</Button>
@@ -565,7 +434,6 @@ function EscrowCard({ account, isOwner }) {
                 />
               </DialogDescription>
             </DialogHeader>
-            
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <h4 className="font-medium">Maker</h4>
@@ -573,26 +441,22 @@ function EscrowCard({ account, isOwner }) {
                   {escrowState.maker.toString()}
                 </p>
               </div>
-              
               <div className="space-y-2">
                 <h4 className="font-medium">Token A (Requested)</h4>
                 <p className="font-mono text-sm break-all">
                   {escrowState.mintA.toString()}
                 </p>
               </div>
-              
               <div className="space-y-2">
                 <h4 className="font-medium">Token B (Offered)</h4>
                 <p className="font-mono text-sm break-all">
                   {escrowState.mintB.toString()}
                 </p>
               </div>
-              
               <div className="space-y-2">
                 <h4 className="font-medium">Amount to Receive</h4>
                 <p>{escrowState.receiveAmount.toString()}</p>
               </div>
-              
               <div className="space-y-2">
                 <h4 className="font-medium">Seed</h4>
                 <p>{escrowState.seed.toString()}</p>

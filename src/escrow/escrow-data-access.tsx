@@ -6,10 +6,11 @@ import { useMemo } from 'react'
 import { useCluster } from '@/components/cluster/cluster-data-access'
 import { useTransactionToast } from '@/components/use-transaction-toast'
 import { toast } from 'sonner'
+import * as anchor from "@coral-xyz/anchor";
 import { useAnchorProvider } from '@/components/solana/use-anchor-provider'
-import { BN } from '@project/anchor'
+import { BN } from 'bn.js'
 
-export function useEscrowProgram() {
+function useEscrowProgram() {
   const { connection } = useConnection()
   const { publicKey } = useWallet()
   const { cluster } = useCluster()
@@ -56,7 +57,7 @@ export function useEscrowProgram() {
           new BN(receiveAmount),
           new BN(amount)
         )
-        .accounts({
+        .accountsPartial({
           maker: publicKey,
           mintA,
           mintB,
@@ -70,11 +71,11 @@ export function useEscrowProgram() {
     },
     onSuccess: (signature) => {
       transactionToast(signature)
-      toast.success('Escrow created successfully')
-      // Invalidate queries to refresh data
-      return Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['get-escrow-accounts'] })
-      ])
+      return getEscrowAccounts.refetch()
+    },
+    onError: (error) => {
+      console.error('Initialization error:', error)
+      toast.error('Failed to initialize account')
     },
   })
 
@@ -87,7 +88,7 @@ export function useEscrowProgram() {
     }) => {
       const signature = await program.methods
         .refund()
-        .accounts({
+        .accountsPartial({
           escrow: escrowAddress,
           mintA,
         })
@@ -115,7 +116,7 @@ export function useEscrowProgram() {
     }) => {
       const signature = await program.methods
         .take()
-        .accounts({
+        .accountsPartial({
           escrow: escrowAddress,
           maker,
           mintA,
@@ -144,3 +145,6 @@ export function useEscrowProgram() {
     takeEscrow,
   }
 }
+
+
+export { useEscrowProgram };
